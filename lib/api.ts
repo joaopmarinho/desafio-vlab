@@ -3,6 +3,21 @@ import { mockEvents, mockParticipants, mockCheckinRules, mockDashboard } from ".
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+// Token management — ready for real backend integration
+let authToken: string | null = null
+
+export function setToken(token: string | null) {
+  authToken = token
+}
+
+export function getToken(): string | null {
+  return authToken
+}
+
+export function clearToken() {
+  authToken = null
+}
+
 let events = [...mockEvents]
 let participants = [...mockParticipants]
 let checkinRules = [...mockCheckinRules]
@@ -23,10 +38,17 @@ export const api = {
   // Dashboard
   async getDashboard(): Promise<DashboardData> {
     await delay(500)
+    const checkinCount = participants.filter((p) => p.checkedIn).length
+    const attendanceRate =
+      participants.length > 0
+        ? Math.round((checkinCount / participants.length) * 100)
+        : 0
     return {
       ...mockDashboard,
       totalEvents: events.length,
       totalParticipants: participants.length,
+      checkinCount,
+      attendanceRate,
     }
   },
 
