@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
 import type { User } from "@/lib/types"
-import { api } from "@/lib/api"
+import { api, setToken as setApiToken, clearToken as clearApiToken } from "@/lib/api"
 
 interface AuthContextType {
   user: User | null
@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (storedToken && storedUser) {
       setToken(storedToken)
       setUser(JSON.parse(storedUser))
+      setApiToken(storedToken)
     }
     setIsLoading(false)
   }, [])
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await api.login(email, password)
     setToken(response.token)
     setUser(response.user)
+    setApiToken(response.token)
     sessionStorage.setItem("auth_token", response.token)
     sessionStorage.setItem("auth_user", JSON.stringify(response.user))
   }, [])
@@ -41,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setToken(null)
     setUser(null)
+    clearApiToken()
     sessionStorage.removeItem("auth_token")
     sessionStorage.removeItem("auth_user")
   }, [])
