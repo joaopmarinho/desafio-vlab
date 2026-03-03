@@ -30,7 +30,6 @@ export const mockDashboard: DashboardData = {
   totalEvents: 6,
   totalParticipants: 8,
   checkinCount: 4,
-  attendanceRate: 50,
   recentCheckins: [
     { id: "1", participantName: "Ana Silva", eventName: "Tech Summit 2026", time: "2026-02-28T10:30:00" },
     { id: "2", participantName: "Maria Santos", eventName: "Workshop React Avançado", time: "2026-02-28T09:15:00" },

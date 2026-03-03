@@ -1,13 +1,12 @@
 "use client"
 
-import { Calendar, Users, CheckCircle, TrendingUp } from "lucide-react"
+import { Calendar, Users, CheckCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 
 interface DashboardStatsProps {
   totalEvents: number
   totalParticipants: number
   checkinCount: number
-  attendanceRate: number
 }
 
 const statConfig = [
@@ -32,30 +31,21 @@ const statConfig = [
     color: "text-success",
     bgColor: "bg-success/10",
   },
-  {
-    key: "rate",
-    label: "Taxa de Presença",
-    icon: TrendingUp,
-    color: "text-chart-3",
-    bgColor: "bg-chart-3/10",
-  },
 ]
 
 export function DashboardStats({
   totalEvents,
   totalParticipants,
   checkinCount,
-  attendanceRate,
 }: DashboardStatsProps) {
   const values: Record<string, string> = {
     events: String(totalEvents),
     participants: String(totalParticipants),
     checkins: String(checkinCount),
-    rate: `${attendanceRate}%`,
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {statConfig.map((stat) => (
         <Card key={stat.key}>
           <CardContent className="flex items-center gap-4 p-5">

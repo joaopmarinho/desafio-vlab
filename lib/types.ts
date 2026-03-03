@@ -41,7 +41,6 @@ export interface DashboardData {
   totalEvents: number
   totalParticipants: number
   checkinCount: number
-  attendanceRate: number
   recentCheckins: {
     id: string
     participantName: string

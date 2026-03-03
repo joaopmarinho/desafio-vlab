@@ -39,16 +39,11 @@ export const api = {
   async getDashboard(): Promise<DashboardData> {
     await delay(500)
     const checkinCount = participants.filter((p) => p.checkedIn).length
-    const attendanceRate =
-      participants.length > 0
-        ? Math.round((checkinCount / participants.length) * 100)
-        : 0
     return {
       ...mockDashboard,
       totalEvents: events.length,
       totalParticipants: participants.length,
       checkinCount,
-      attendanceRate,
     }
   },
 
