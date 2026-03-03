@@ -1,42 +1,28 @@
-import { useEffect, useState, useCallback } from "react"
-import { api } from "@/lib/api"
+"use client"
+
+import { useState } from "react"
 import type { Event } from "@/lib/types"
+import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent } from "@/features/events"
 import { EventsTable } from "@/components/events/events-table"
 import { EventFormDialog } from "@/components/events/event-form-dialog"
 import { EventsToolbar } from "@/components/events/events-toolbar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
-import { Calendar, AlertTriangle, RefreshCw } from "lucide-react"
+import { Calendar } from "lucide-react"
+import { ErrorCard } from "@/components/shared/error-card"
 
 export default function EventosPage() {
-    const [events, setEvents] = useState<Event[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const { data: events = [], isLoading, error, refetch } = useEvents()
+    const createEvent = useCreateEvent()
+    const updateEvent = useUpdateEvent()
+    const deleteEvent = useDeleteEvent()
+
     const [search, setSearch] = useState("")
     const [statusFilter, setStatusFilter] = useState<string>("all")
     const [dateFrom, setDateFrom] = useState("")
     const [dateTo, setDateTo] = useState("")
     const [editingEvent, setEditingEvent] = useState<Event | null>(null)
     const [formOpen, setFormOpen] = useState(false)
-
-    const loadEvents = useCallback(async () => {
-        setIsLoading(true)
-        setError(null)
-        try {
-            const data = await api.getEvents()
-            setEvents(data)
-        } catch {
-            setError("Não foi possível carregar os eventos.")
-        } finally {
-            setIsLoading(false)
-        }
-    }, [])
-
-    useEffect(() => {
-        loadEvents()
-    }, [loadEvents])
 
     const filteredEvents = events.filter((event) => {
         const matchesSearch =
@@ -50,37 +36,19 @@ export default function EventosPage() {
     })
 
     const handleCreate = async (data: Omit<Event, "id">) => {
-        try {
-            await api.createEvent(data)
-            await loadEvents()
-            setFormOpen(false)
-            toast.success("Evento criado com sucesso!")
-        } catch {
-            toast.error("Erro ao criar evento")
-        }
+        await createEvent.mutateAsync(data)
+        setFormOpen(false)
     }
 
     const handleUpdate = async (data: Omit<Event, "id">) => {
         if (!editingEvent) return
-        try {
-            await api.updateEvent(editingEvent.id, data)
-            await loadEvents()
-            setEditingEvent(null)
-            setFormOpen(false)
-            toast.success("Evento atualizado com sucesso!")
-        } catch {
-            toast.error("Erro ao atualizar evento")
-        }
+        await updateEvent.mutateAsync({ id: editingEvent.id, data })
+        setEditingEvent(null)
+        setFormOpen(false)
     }
 
     const handleDelete = async (id: string) => {
-        try {
-            await api.deleteEvent(id)
-            await loadEvents()
-            toast.success("Evento removido com sucesso!")
-        } catch {
-            toast.error("Erro ao remover evento")
-        }
+        await deleteEvent.mutateAsync(id)
     }
 
     const handleEdit = (event: Event) => {
@@ -130,19 +98,11 @@ export default function EventosPage() {
                     </CardContent>
                 </Card>
             ) : error ? (
-                <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-16">
-                        <div className="flex items-center justify-center h-12 w-12 rounded-full bg-destructive/10 mb-3">
-                            <AlertTriangle className="h-6 w-6 text-destructive" />
-                        </div>
-                        <p className="text-sm font-medium text-foreground">Erro ao carregar eventos</p>
-                        <p className="text-xs text-muted-foreground mt-1">{error}</p>
-                        <Button variant="outline" size="sm" className="mt-4" onClick={loadEvents}>
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Tentar novamente
-                        </Button>
-                    </CardContent>
-                </Card>
+                <ErrorCard
+                    title="Erro ao carregar eventos"
+                    message={error.message}
+                    onRetry={() => refetch()}
+                />
             ) : filteredEvents.length === 0 ? (
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-16">
