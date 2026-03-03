@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { api } from "@/lib/api"
-import type { Event, CheckinRule } from "@/lib/types"
+import { useState } from "react"
+import type { CheckinRule } from "@/lib/types"
+import { useEvents } from "@/features/events"
+import { useCheckinRulesQuery, useSaveCheckinRules } from "@/features/checkin"
 import { CheckinRulesManager } from "@/components/checkin/checkin-rules-manager"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import {
     Select,
     SelectContent,
@@ -15,65 +15,22 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { Settings, AlertTriangle, RefreshCw } from "lucide-react"
-import { toast } from "sonner"
+import { Settings } from "lucide-react"
+import { ErrorCard } from "@/components/shared/error-card"
 
 export default function CheckinPage() {
-    const [events, setEvents] = useState<Event[]>([])
     const [selectedEventId, setSelectedEventId] = useState<string>("")
-    const [rules, setRules] = useState<CheckinRule[]>([])
-    const [isLoadingEvents, setIsLoadingEvents] = useState(true)
-    const [isLoadingRules, setIsLoadingRules] = useState(false)
-    const [isSaving, setIsSaving] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const { data: events = [], isLoading: isLoadingEvents, error: eventsError, refetch: refetchEvents } = useEvents()
+    const { data: rules = [], isLoading: isLoadingRules } = useCheckinRulesQuery(selectedEventId)
+    const saveRules = useSaveCheckinRules()
 
-    const loadEvents = useCallback(async () => {
-        setIsLoadingEvents(true)
-        setError(null)
-        try {
-            const data = await api.getEvents()
-            setEvents(data)
-            if (data.length > 0) {
-                setSelectedEventId(data[0].id)
-            }
-        } catch {
-            setError("Não foi possível carregar os eventos.")
-        } finally {
-            setIsLoadingEvents(false)
-        }
-    }, [])
-
-    const loadRules = useCallback(async (eventId: string) => {
-        setIsLoadingRules(true)
-        try {
-            const data = await api.getCheckinRules(eventId)
-            setRules(data)
-        } finally {
-            setIsLoadingRules(false)
-        }
-    }, [])
-
-    useEffect(() => {
-        loadEvents()
-    }, [loadEvents])
-
-    useEffect(() => {
-        if (selectedEventId) {
-            loadRules(selectedEventId)
-        }
-    }, [selectedEventId, loadRules])
+    // Auto-select first event when events load
+    if (events.length > 0 && !selectedEventId) {
+        setSelectedEventId(events[0].id)
+    }
 
     const handleSaveRules = async (updatedRules: CheckinRule[]) => {
-        setIsSaving(true)
-        try {
-            const saved = await api.updateCheckinRules(selectedEventId, updatedRules)
-            setRules(saved)
-            toast.success("Regras de check-in salvas com sucesso!")
-        } catch {
-            toast.error("Erro ao salvar regras")
-        } finally {
-            setIsSaving(false)
-        }
+        await saveRules.mutateAsync({ eventId: selectedEventId, rules: updatedRules })
     }
 
     if (isLoadingEvents) {
@@ -93,7 +50,7 @@ export default function CheckinPage() {
         )
     }
 
-    if (error) {
+    if (eventsError) {
         return (
             <div className="flex flex-col gap-6">
                 <div>
@@ -101,19 +58,11 @@ export default function CheckinPage() {
                         Configuração de Check-in
                     </h1>
                 </div>
-                <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-16">
-                        <div className="flex items-center justify-center h-12 w-12 rounded-full bg-destructive/10 mb-3">
-                            <AlertTriangle className="h-6 w-6 text-destructive" />
-                        </div>
-                        <p className="text-sm font-medium text-foreground">Erro ao carregar dados</p>
-                        <p className="text-xs text-muted-foreground mt-1">{error}</p>
-                        <Button variant="outline" size="sm" className="mt-4" onClick={loadEvents}>
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Tentar novamente
-                        </Button>
-                    </CardContent>
-                </Card>
+                <ErrorCard
+                    title="Erro ao carregar dados"
+                    message={eventsError.message}
+                    onRetry={() => refetchEvents()}
+                />
             </div>
         )
     }
@@ -168,7 +117,7 @@ export default function CheckinPage() {
                     eventId={selectedEventId}
                     rules={rules}
                     onSave={handleSaveRules}
-                    isSaving={isSaving}
+                    isSaving={saveRules.isPending}
                 />
             )}
         </div>
