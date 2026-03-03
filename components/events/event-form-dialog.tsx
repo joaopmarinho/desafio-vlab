@@ -1,7 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import type { Event } from "@/lib/types"
+import { eventSchema, type EventFormData } from "@/lib/validations"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,49 +33,48 @@ interface EventFormDialogProps {
 }
 
 export function EventFormDialog({ open, onClose, event, onSubmit }: EventFormDialogProps) {
-  const [name, setName] = useState("")
-  const [date, setDate] = useState("")
-  const [location, setLocation] = useState("")
-  const [status, setStatus] = useState<"Ativo" | "Encerrado">("Ativo")
-  const [description, setDescription] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<EventFormData>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      name: "",
+      date: "",
+      location: "",
+      status: "Ativo",
+      description: "",
+    },
+  })
+
+  const statusValue = watch("status")
 
   useEffect(() => {
     if (event) {
-      setName(event.name)
-      setDate(event.date.slice(0, 16))
-      setLocation(event.location)
-      setStatus(event.status)
-      setDescription(event.description || "")
+      reset({
+        name: event.name,
+        date: event.date.slice(0, 16),
+        location: event.location,
+        status: event.status,
+        description: event.description || "",
+      })
     } else {
-      setName("")
-      setDate("")
-      setLocation("")
-      setStatus("Ativo")
-      setDescription("")
+      reset({
+        name: "",
+        date: "",
+        location: "",
+        status: "Ativo",
+        description: "",
+      })
     }
-    setErrors({})
-  }, [event, open])
+  }, [event, open, reset])
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {}
-    if (!name.trim()) newErrors.name = "Nome é obrigatório"
-    if (!date) newErrors.date = "Data é obrigatória"
-    if (!location.trim()) newErrors.location = "Local é obrigatório"
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validate()) return
-    setIsSubmitting(true)
-    try {
-      await onSubmit({ name, date, location, status, description })
-    } finally {
-      setIsSubmitting(false)
-    }
+  const onFormSubmit = async (data: EventFormData) => {
+    await onSubmit(data)
   }
 
   return (
@@ -81,16 +83,15 @@ export function EventFormDialog({ open, onClose, event, onSubmit }: EventFormDia
         <DialogHeader>
           <DialogTitle>{event ? "Editar Evento" : "Novo Evento"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="event-name">Nome do evento</Label>
             <Input
               id="event-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              {...register("name")}
               placeholder="Nome do evento"
             />
-            {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -98,26 +99,27 @@ export function EventFormDialog({ open, onClose, event, onSubmit }: EventFormDia
             <Input
               id="event-date"
               type="datetime-local"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              {...register("date")}
             />
-            {errors.date && <p className="text-xs text-destructive">{errors.date}</p>}
+            {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="event-location">Local</Label>
             <Input
               id="event-location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              {...register("location")}
               placeholder="Local do evento"
             />
-            {errors.location && <p className="text-xs text-destructive">{errors.location}</p>}
+            {errors.location && <p className="text-xs text-destructive">{errors.location.message}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="event-status">Status</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as "Ativo" | "Encerrado")}>
+            <Select
+              value={statusValue}
+              onValueChange={(v) => setValue("status", v as "Ativo" | "Encerrado")}
+            >
               <SelectTrigger id="event-status">
                 <SelectValue />
               </SelectTrigger>
@@ -132,11 +134,11 @@ export function EventFormDialog({ open, onClose, event, onSubmit }: EventFormDia
             <Label htmlFor="event-description">Descrição (opcional)</Label>
             <Textarea
               id="event-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              {...register("description")}
               placeholder="Descrição do evento"
               rows={3}
             />
+            {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
           </div>
 
           <DialogFooter className="gap-2">
