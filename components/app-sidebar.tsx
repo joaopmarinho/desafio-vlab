@@ -2,21 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  LayoutDashboard,
-  Calendar,
-  Users,
-  Settings,
-  Zap,
-} from "lucide-react"
+import { Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/eventos", label: "Eventos", icon: Calendar },
-  { href: "/dashboard/participantes", label: "Participantes", icon: Users },
-  { href: "/dashboard/checkin", label: "Check-in", icon: Settings },
-]
+import { navItems } from "@/lib/constants"
 
 export function AppSidebar() {
   const pathname = usePathname()
@@ -34,7 +22,7 @@ export function AppSidebar() {
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href))
+              (item.href !== "/" && pathname.startsWith(item.href))
             return (
               <li key={item.href}>
                 <Link

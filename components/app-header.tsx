@@ -3,17 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import {
-  LogOut,
-  Menu,
-  X,
-  LayoutDashboard,
-  Calendar,
-  Users,
-  Settings,
-  Zap,
-  User,
-} from "lucide-react"
+import { LogOut, Menu, X, Zap, User } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,13 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/eventos", label: "Eventos", icon: Calendar },
-  { href: "/dashboard/participantes", label: "Participantes", icon: Users },
-  { href: "/dashboard/checkin", label: "Check-in", icon: Settings },
-]
+import { navItems } from "@/lib/constants"
 
 export function AppHeader() {
   const { user, logout } = useAuth()
@@ -40,7 +24,7 @@ export function AppHeader() {
 
   const handleLogout = () => {
     logout()
-    router.push("/")
+    router.push("/login")
   }
 
   return (
@@ -95,7 +79,7 @@ export function AppHeader() {
               {navItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
-                  (item.href !== "/dashboard" && pathname.startsWith(item.href))
+                  (item.href !== "/" && pathname.startsWith(item.href))
                 return (
                   <li key={item.href}>
                     <Link
