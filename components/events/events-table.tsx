@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { Pencil, Trash2, MoreHorizontal } from "lucide-react"
+import { Pencil, Trash2, MoreHorizontal, Eye } from "lucide-react"
 import type { Event } from "@/lib/types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -32,6 +33,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { TablePagination } from "@/components/ui/table-pagination"
+
+const ITEMS_PER_PAGE = 5
 
 interface EventsTableProps {
   events: Event[]
@@ -41,6 +51,23 @@ interface EventsTableProps {
 
 export function EventsTable({ events, onEdit, onDelete }: EventsTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [viewingEvent, setViewingEvent] = useState<Event | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const totalPages = Math.ceil(events.length / ITEMS_PER_PAGE)
+  const paginatedEvents = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return events.slice(start, start + ITEMS_PER_PAGE)
+  }, [events, currentPage])
+
+  // Reset to page 1 when events change (e.g. filter applied)
+  const [prevLength, setPrevLength] = useState(events.length)
+  if (events.length !== prevLength) {
+    setPrevLength(events.length)
+    if (currentPage > Math.ceil(events.length / ITEMS_PER_PAGE)) {
+      setCurrentPage(1)
+    }
+  }
 
   return (
     <>
@@ -60,7 +87,7 @@ export function EventsTable({ events, onEdit, onDelete }: EventsTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {events.map((event) => (
+              {paginatedEvents.map((event) => (
                 <TableRow key={event.id}>
                   <TableCell className="font-medium">{event.name}</TableCell>
                   <TableCell>
@@ -88,6 +115,11 @@ export function EventsTable({ events, onEdit, onDelete }: EventsTableProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setViewingEvent(event)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver detalhes
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onEdit(event)}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
@@ -106,12 +138,19 @@ export function EventsTable({ events, onEdit, onDelete }: EventsTableProps) {
               ))}
             </TableBody>
           </Table>
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={events.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
         </CardContent>
       </Card>
 
       {/* Mobile cards */}
       <div className="flex flex-col gap-3 md:hidden">
-        {events.map((event) => (
+        {paginatedEvents.map((event) => (
           <Card key={event.id}>
             <CardContent className="flex items-start justify-between p-4">
               <div className="flex flex-col gap-1 min-w-0">
@@ -122,11 +161,10 @@ export function EventsTable({ events, onEdit, onDelete }: EventsTableProps) {
                 <span className="text-xs text-muted-foreground truncate">{event.location}</span>
                 <Badge
                   variant={event.status === "Ativo" ? "default" : "secondary"}
-                  className={`w-fit mt-1 ${
-                    event.status === "Ativo"
+                  className={`w-fit mt-1 ${event.status === "Ativo"
                       ? "bg-success/10 text-success hover:bg-success/20 border-0"
                       : "bg-muted text-muted-foreground border-0"
-                  }`}
+                    }`}
                 >
                   {event.status}
                 </Badge>
@@ -139,6 +177,11 @@ export function EventsTable({ events, onEdit, onDelete }: EventsTableProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setViewingEvent(event)}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Ver detalhes
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => onEdit(event)}>
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar
@@ -155,8 +198,16 @@ export function EventsTable({ events, onEdit, onDelete }: EventsTableProps) {
             </CardContent>
           </Card>
         ))}
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={events.length}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
+      {/* Delete confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -181,6 +232,66 @@ export function EventsTable({ events, onEdit, onDelete }: EventsTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Event details dialog */}
+      <Dialog open={!!viewingEvent} onOpenChange={() => setViewingEvent(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Evento</DialogTitle>
+          </DialogHeader>
+          {viewingEvent && (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Nome</span>
+                <span className="text-sm font-medium">{viewingEvent.name}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Data e hora</span>
+                <span className="text-sm">
+                  {format(new Date(viewingEvent.date), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", {
+                    locale: ptBR,
+                  })}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Local</span>
+                <span className="text-sm">{viewingEvent.location}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Status</span>
+                <Badge
+                  variant={viewingEvent.status === "Ativo" ? "default" : "secondary"}
+                  className={`w-fit ${viewingEvent.status === "Ativo"
+                      ? "bg-success/10 text-success hover:bg-success/20 border-0"
+                      : "bg-muted text-muted-foreground border-0"
+                    }`}
+                >
+                  {viewingEvent.status}
+                </Badge>
+              </div>
+              {viewingEvent.description && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-muted-foreground">Descrição</span>
+                  <span className="text-sm">{viewingEvent.description}</span>
+                </div>
+              )}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setViewingEvent(null)
+                    onEdit(viewingEvent)
+                  }}
+                >
+                  <Pencil className="mr-2 h-3.5 w-3.5" />
+                  Editar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
