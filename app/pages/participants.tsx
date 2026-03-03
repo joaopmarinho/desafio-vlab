@@ -1,45 +1,38 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { api } from "@/lib/api"
-import type { Participant, Event } from "@/lib/types"
+import { useState } from "react"
+import type { Participant } from "@/lib/types"
+import {
+    useParticipants,
+    useCreateParticipant,
+    useUpdateParticipant,
+    useDeleteParticipant,
+    useToggleCheckin,
+} from "@/features/participants"
+import { useEvents } from "@/features/events"
 import { ParticipantsTable } from "@/components/participants/participants-table"
 import { ParticipantFormDialog } from "@/components/participants/participant-form-dialog"
 import { ParticipantsToolbar } from "@/components/participants/participants-toolbar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
-import { Users, AlertTriangle, RefreshCw } from "lucide-react"
+import { Users } from "lucide-react"
+import { ErrorCard } from "@/components/shared/error-card"
 
 export default function ParticipantesPage() {
-    const [participants, setParticipants] = useState<Participant[]>([])
-    const [events, setEvents] = useState<Event[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const { data: participants = [], isLoading: isLoadingParticipants, error: participantsError, refetch } = useParticipants()
+    const { data: events = [], isLoading: isLoadingEvents } = useEvents()
+    const createParticipant = useCreateParticipant()
+    const updateParticipant = useUpdateParticipant()
+    const deleteParticipant = useDeleteParticipant()
+    const toggleCheckin = useToggleCheckin()
+
+    const isLoading = isLoadingParticipants || isLoadingEvents
+
     const [search, setSearch] = useState("")
     const [eventFilter, setEventFilter] = useState<string>("all")
     const [checkinFilter, setCheckinFilter] = useState<string>("all")
     const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null)
     const [formOpen, setFormOpen] = useState(false)
-
-    const loadData = useCallback(async () => {
-        setIsLoading(true)
-        setError(null)
-        try {
-            const [p, e] = await Promise.all([api.getParticipants(), api.getEvents()])
-            setParticipants(p)
-            setEvents(e)
-        } catch {
-            setError("Não foi possível carregar os participantes.")
-        } finally {
-            setIsLoading(false)
-        }
-    }, [])
-
-    useEffect(() => {
-        loadData()
-    }, [loadData])
 
     const filteredParticipants = participants.filter((p) => {
         const matchesSearch =
@@ -54,51 +47,23 @@ export default function ParticipantesPage() {
     })
 
     const handleCreate = async (data: Omit<Participant, "id">) => {
-        try {
-            await api.createParticipant(data)
-            await loadData()
-            setFormOpen(false)
-            toast.success("Participante cadastrado com sucesso!")
-        } catch {
-            toast.error("Erro ao cadastrar participante")
-        }
+        await createParticipant.mutateAsync(data)
+        setFormOpen(false)
     }
 
     const handleUpdate = async (data: Omit<Participant, "id">) => {
         if (!editingParticipant) return
-        try {
-            await api.updateParticipant(editingParticipant.id, data)
-            await loadData()
-            setEditingParticipant(null)
-            setFormOpen(false)
-            toast.success("Participante atualizado com sucesso!")
-        } catch {
-            toast.error("Erro ao atualizar participante")
-        }
+        await updateParticipant.mutateAsync({ id: editingParticipant.id, data })
+        setEditingParticipant(null)
+        setFormOpen(false)
     }
 
     const handleDelete = async (id: string) => {
-        try {
-            await api.deleteParticipant(id)
-            await loadData()
-            toast.success("Participante removido com sucesso!")
-        } catch {
-            toast.error("Erro ao remover participante")
-        }
+        await deleteParticipant.mutateAsync(id)
     }
 
     const handleToggleCheckin = async (participant: Participant) => {
-        try {
-            await api.updateParticipant(participant.id, {
-                checkedIn: !participant.checkedIn,
-            })
-            await loadData()
-            toast.success(
-                participant.checkedIn ? "Check-in desfeito" : "Check-in realizado!"
-            )
-        } catch {
-            toast.error("Erro ao atualizar check-in")
-        }
+        await toggleCheckin.mutateAsync(participant)
     }
 
     const handleEdit = (participant: Participant) => {
@@ -146,20 +111,12 @@ export default function ParticipantesPage() {
                         </div>
                     </CardContent>
                 </Card>
-            ) : error ? (
-                <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-16">
-                        <div className="flex items-center justify-center h-12 w-12 rounded-full bg-destructive/10 mb-3">
-                            <AlertTriangle className="h-6 w-6 text-destructive" />
-                        </div>
-                        <p className="text-sm font-medium text-foreground">Erro ao carregar participantes</p>
-                        <p className="text-xs text-muted-foreground mt-1">{error}</p>
-                        <Button variant="outline" size="sm" className="mt-4" onClick={loadData}>
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Tentar novamente
-                        </Button>
-                    </CardContent>
-                </Card>
+            ) : participantsError ? (
+                <ErrorCard
+                    title="Erro ao carregar participantes"
+                    message={participantsError.message}
+                    onRetry={() => refetch()}
+                />
             ) : filteredParticipants.length === 0 ? (
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-16">
