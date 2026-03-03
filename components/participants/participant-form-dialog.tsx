@@ -1,7 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import type { Participant, Event } from "@/lib/types"
+import { participantSchema, type ParticipantFormData } from "@/lib/validations"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -36,54 +39,51 @@ export function ParticipantFormDialog({
   events,
   onSubmit,
 }: ParticipantFormDialogProps) {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [eventId, setEventId] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<ParticipantFormData>({
+    resolver: zodResolver(participantSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      eventId: "",
+    },
+  })
+
+  const eventIdValue = watch("eventId")
 
   useEffect(() => {
     if (participant) {
-      setName(participant.name)
-      setEmail(participant.email)
-      setEventId(participant.eventId)
+      reset({
+        name: participant.name,
+        email: participant.email,
+        eventId: participant.eventId,
+      })
     } else {
-      setName("")
-      setEmail("")
-      setEventId("")
+      reset({
+        name: "",
+        email: "",
+        eventId: "",
+      })
     }
-    setErrors({})
-  }, [participant, open])
+  }, [participant, open, reset])
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {}
-    if (!name.trim()) newErrors.name = "Nome é obrigatório"
-    if (!email.trim()) newErrors.email = "E-mail é obrigatório"
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "E-mail inválido"
-    if (!eventId) newErrors.eventId = "Selecione um evento"
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validate()) return
-
-    const selectedEvent = events.find((ev) => ev.id === eventId)
+  const onFormSubmit = async (data: ParticipantFormData) => {
+    const selectedEvent = events.find((ev) => ev.id === data.eventId)
     if (!selectedEvent) return
 
-    setIsSubmitting(true)
-    try {
-      await onSubmit({
-        name,
-        email,
-        eventId,
-        eventName: selectedEvent.name,
-        checkedIn: participant?.checkedIn ?? false,
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
+    await onSubmit({
+      name: data.name,
+      email: data.email,
+      eventId: data.eventId,
+      eventName: selectedEvent.name,
+      checkedIn: participant?.checkedIn ?? false,
+    })
   }
 
   return (
@@ -94,16 +94,15 @@ export function ParticipantFormDialog({
             {participant ? "Editar Participante" : "Novo Participante"}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="participant-name">Nome</Label>
             <Input
               id="participant-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              {...register("name")}
               placeholder="Nome completo"
             />
-            {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -111,18 +110,17 @@ export function ParticipantFormDialog({
             <Input
               id="participant-email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              {...register("email")}
               placeholder="email@exemplo.com"
             />
-            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+            {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="participant-event">
               {participant ? "Transferir para evento" : "Evento"}
             </Label>
-            <Select value={eventId} onValueChange={setEventId}>
+            <Select value={eventIdValue} onValueChange={(v) => setValue("eventId", v)}>
               <SelectTrigger id="participant-event">
                 <SelectValue placeholder="Selecione um evento" />
               </SelectTrigger>
@@ -134,8 +132,8 @@ export function ParticipantFormDialog({
                 ))}
               </SelectContent>
             </Select>
-            {errors.eventId && <p className="text-xs text-destructive">{errors.eventId}</p>}
-            {participant && participant.eventId !== eventId && eventId && (
+            {errors.eventId && <p className="text-xs text-destructive">{errors.eventId.message}</p>}
+            {participant && participant.eventId !== eventIdValue && eventIdValue && (
               <p className="text-xs text-warning-foreground bg-warning/10 rounded-md px-2 py-1.5">
                 O participante será transferido para o evento selecionado.
               </p>
