@@ -6,9 +6,11 @@ import { Card, CardContent } from "@/components/ui/card"
 interface DashboardStatsProps {
   totalEvents: number
   totalParticipants: number
+  checkinCount: number
+  attendanceRate: number
 }
 
-const stats = [
+const statConfig = [
   {
     key: "events",
     label: "Total de Eventos",
@@ -39,20 +41,22 @@ const stats = [
   },
 ]
 
-export function DashboardStats({ totalEvents, totalParticipants }: DashboardStatsProps) {
-  const checkins = 4
-  const rate = totalParticipants > 0 ? Math.round((checkins / totalParticipants) * 100) : 0
-
+export function DashboardStats({
+  totalEvents,
+  totalParticipants,
+  checkinCount,
+  attendanceRate,
+}: DashboardStatsProps) {
   const values: Record<string, string> = {
     events: String(totalEvents),
     participants: String(totalParticipants),
-    checkins: String(checkins),
-    rate: `${rate}%`,
+    checkins: String(checkinCount),
+    rate: `${attendanceRate}%`,
   }
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat) => (
+      {statConfig.map((stat) => (
         <Card key={stat.key}>
           <CardContent className="flex items-center gap-4 p-5">
             <div className={`flex items-center justify-center h-10 w-10 rounded-lg ${stat.bgColor}`}>
