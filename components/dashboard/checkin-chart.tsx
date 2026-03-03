@@ -21,8 +21,8 @@ export function CheckinChart({ checkinCount, totalParticipants }: CheckinChartPr
     const pending = totalParticipants - checkinCount
 
     const data = [
-        { name: "Check-in feito", value: checkinCount },
-        { name: "Pendente", value: pending },
+        { name: "Check-in feito", quantidade: checkinCount },
+        { name: "Pendente", quantidade: pending },
     ]
 
     const colors = ["hsl(var(--chart-1))", "hsl(var(--chart-4))"]
@@ -53,7 +53,7 @@ export function CheckinChart({ checkinCount, totalParticipants }: CheckinChartPr
                                     fontSize: 12,
                                 }}
                             />
-                            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={28}>
+                            <Bar dataKey="quantidade" radius={[0, 4, 4, 0]} barSize={28}>
                                 {data.map((_, index) => (
                                     <Cell key={index} fill={colors[index]} />
                                 ))}
