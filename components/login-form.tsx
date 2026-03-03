@@ -1,44 +1,39 @@
 "use client"
 
-import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuth } from "@/contexts/auth-context"
+import { loginSchema, type LoginFormData } from "@/lib/validations"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle, Loader2, Zap, Eye, EyeOff } from "lucide-react"
+import { useState } from "react"
 
 export function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [serverError, setServerError] = useState("")
   const { login } = useAuth()
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  })
 
-    if (!email.trim()) {
-      setError("O e-mail é obrigatório")
-      return
-    }
-    if (!password.trim()) {
-      setError("A senha é obrigatória")
-      return
-    }
-
-    setIsLoading(true)
+  const onSubmit = async (data: LoginFormData) => {
+    setServerError("")
     try {
-      await login(email, password)
-      router.push("/dashboard")
+      await login(data.email, data.password)
+      router.push("/")
     } catch {
-      setError("Credenciais inválidas. Tente novamente.")
-    } finally {
-      setIsLoading(false)
+      setServerError("Credenciais inválidas. Tente novamente.")
     }
   }
 
@@ -61,14 +56,14 @@ export function LoginForm() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-              {error && (
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
+              {serverError && (
                 <div
                   className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
                   role="alert"
                 >
                   <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>{error}</span>
+                  <span>{serverError}</span>
                 </div>
               )}
 
@@ -78,12 +73,13 @@ export function LoginForm() {
                   id="email"
                   type="email"
                   placeholder="admin@eventos.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  {...register("email")}
                   autoComplete="email"
-                  disabled={isLoading}
-                  required
+                  disabled={isSubmitting}
                 />
+                {errors.email && (
+                  <p className="text-xs text-destructive">{errors.email.message}</p>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -93,12 +89,10 @@ export function LoginForm() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Sua senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    {...register("password")}
                     autoComplete="current-password"
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                     className="pr-10"
-                    required
                   />
                   <button
                     type="button"
@@ -109,10 +103,13 @@ export function LoginForm() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-xs text-destructive">{errors.password.message}</p>
+                )}
               </div>
 
-              <Button type="submit" className="w-full mt-2" disabled={isLoading}>
-                {isLoading ? (
+              <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
+                {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Entrando...
