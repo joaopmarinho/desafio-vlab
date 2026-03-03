@@ -1,36 +1,15 @@
-import { useEffect, useState, useCallback } from "react"
-import { api } from "@/lib/api"
-import type { DashboardData } from "@/lib/types"
+"use client"
+
+import { useDashboard } from "@/features/dashboard"
 import { DashboardStats } from "@/components/dashboard/dashboard-stats"
 import { UpcomingEvents } from "@/components/dashboard/upcoming-events"
 import { RecentCheckins } from "@/components/dashboard/recent-checkins"
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton"
 import { CheckinChart } from "@/components/dashboard/checkin-chart"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { AlertTriangle, RefreshCw } from "lucide-react"
+import { ErrorCard } from "@/components/shared/error-card"
 
 export default function DashboardPage() {
-    const [data, setData] = useState<DashboardData | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-
-    const load = useCallback(async () => {
-        setIsLoading(true)
-        setError(null)
-        try {
-            const dashboard = await api.getDashboard()
-            setData(dashboard)
-        } catch {
-            setError("Não foi possível carregar os dados do dashboard.")
-        } finally {
-            setIsLoading(false)
-        }
-    }, [])
-
-    useEffect(() => {
-        load()
-    }, [load])
+    const { data, isLoading, error, refetch } = useDashboard()
 
     if (isLoading) {
         return <DashboardSkeleton />
@@ -38,21 +17,11 @@ export default function DashboardPage() {
 
     if (error || !data) {
         return (
-            <Card>
-                <CardContent className="flex flex-col items-center justify-center py-16">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-full bg-destructive/10 mb-3">
-                        <AlertTriangle className="h-6 w-6 text-destructive" />
-                    </div>
-                    <p className="text-sm font-medium text-foreground">Erro ao carregar dados</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        {error || "Dados indisponíveis"}
-                    </p>
-                    <Button variant="outline" size="sm" className="mt-4" onClick={load}>
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        Tentar novamente
-                    </Button>
-                </CardContent>
-            </Card>
+            <ErrorCard
+                title="Erro ao carregar dados"
+                message={error?.message || "Dados indisponíveis"}
+                onRetry={() => refetch()}
+            />
         )
     }
 
