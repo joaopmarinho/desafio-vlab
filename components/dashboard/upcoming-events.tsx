@@ -23,7 +23,7 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
           Próximos Eventos
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
+      <CardContent className="flex flex-col gap-3 max-h-[40vh] overflow-y-auto [&]:scrollbar-none hover:[&]:scrollbar-thin hover:[&]:scrollbar-thumb-border" style={{ scrollbarWidth: "none" }} onMouseEnter={(e) => { e.currentTarget.style.scrollbarWidth = "thin" }} onMouseLeave={(e) => { e.currentTarget.style.scrollbarWidth = "none" }}>
         {events.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">
             Nenhum evento agendado
