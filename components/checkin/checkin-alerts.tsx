@@ -1,6 +1,6 @@
 "use client"
 
-import type { RuleValidation } from "@/components/checkin/checkin-rules-manager"
+import type { RuleValidation } from "@/hooks/use-checkin-rules"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle, XCircle, Info } from "lucide-react"
 
