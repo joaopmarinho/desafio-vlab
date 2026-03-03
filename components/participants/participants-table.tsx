@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { TablePagination } from "@/components/ui/table-pagination"
 
-const ITEMS_PER_PAGE = 5
+const ITEMS_PER_PAGE = 10
 
 interface ParticipantsTableProps {
   participants: Participant[]

@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/dialog"
 import { TablePagination } from "@/components/ui/table-pagination"
 
-const ITEMS_PER_PAGE = 5
+const ITEMS_PER_PAGE = 10
 
 interface EventsTableProps {
   events: Event[]
