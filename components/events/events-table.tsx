@@ -162,8 +162,8 @@ export function EventsTable({ events, onEdit, onDelete }: EventsTableProps) {
                 <Badge
                   variant={event.status === "Ativo" ? "default" : "secondary"}
                   className={`w-fit mt-1 ${event.status === "Ativo"
-                      ? "bg-success/10 text-success hover:bg-success/20 border-0"
-                      : "bg-muted text-muted-foreground border-0"
+                    ? "bg-success/10 text-success hover:bg-success/20 border-0"
+                    : "bg-muted text-muted-foreground border-0"
                     }`}
                 >
                   {event.status}
@@ -225,7 +225,7 @@ export function EventsTable({ events, onEdit, onDelete }: EventsTableProps) {
                   setDeleteId(null)
                 }
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-white hover:bg-destructive/90 transition-colors"
             >
               Remover
             </AlertDialogAction>
@@ -262,8 +262,8 @@ export function EventsTable({ events, onEdit, onDelete }: EventsTableProps) {
                 <Badge
                   variant={viewingEvent.status === "Ativo" ? "default" : "secondary"}
                   className={`w-fit ${viewingEvent.status === "Ativo"
-                      ? "bg-success/10 text-success hover:bg-success/20 border-0"
-                      : "bg-muted text-muted-foreground border-0"
+                    ? "bg-success/10 text-success hover:bg-success/20 border-0"
+                    : "bg-muted text-muted-foreground border-0"
                     }`}
                 >
                   {viewingEvent.status}
