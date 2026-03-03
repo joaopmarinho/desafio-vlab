@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Pencil, Trash2, MoreHorizontal, CheckCircle, XCircle } from "lucide-react"
 import type { Participant } from "@/lib/types"
 import { Card, CardContent } from "@/components/ui/card"
@@ -31,6 +31,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { TablePagination } from "@/components/ui/table-pagination"
+
+const ITEMS_PER_PAGE = 5
 
 interface ParticipantsTableProps {
   participants: Participant[]
@@ -46,6 +49,21 @@ export function ParticipantsTable({
   onToggleCheckin,
 }: ParticipantsTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const totalPages = Math.ceil(participants.length / ITEMS_PER_PAGE)
+  const paginatedParticipants = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return participants.slice(start, start + ITEMS_PER_PAGE)
+  }, [participants, currentPage])
+
+  const [prevLength, setPrevLength] = useState(participants.length)
+  if (participants.length !== prevLength) {
+    setPrevLength(participants.length)
+    if (currentPage > Math.ceil(participants.length / ITEMS_PER_PAGE)) {
+      setCurrentPage(1)
+    }
+  }
 
   return (
     <>
@@ -65,7 +83,7 @@ export function ParticipantsTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {participants.map((p) => (
+              {paginatedParticipants.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.name}</TableCell>
                   <TableCell className="text-muted-foreground">{p.email}</TableCell>
@@ -128,12 +146,19 @@ export function ParticipantsTable({
               ))}
             </TableBody>
           </Table>
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={participants.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
         </CardContent>
       </Card>
 
       {/* Mobile */}
       <div className="flex flex-col gap-3 md:hidden">
-        {participants.map((p) => (
+        {paginatedParticipants.map((p) => (
           <Card key={p.id}>
             <CardContent className="flex items-start justify-between p-4">
               <div className="flex flex-col gap-1 min-w-0">
@@ -194,6 +219,15 @@ export function ParticipantsTable({
             </CardContent>
           </Card>
         ))}
+      </div>
+      <div className="md:hidden">
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={participants.length}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
