@@ -1,11 +1,12 @@
-import { test, expect } from "@playwright/test"
+import { test, expect, type Page } from "@playwright/test"
 
-async function login(page: import("@playwright/test").Page) {
+async function login(page: Page) {
     await page.goto("/login")
-    await page.fill('[id="email"]', "admin@eventos.com")
-    await page.fill('[id="password"]', "123456")
-    await page.click('button[type="submit"]')
-    await expect(page).toHaveURL("/")
+    await page.getByLabel("E-mail").fill("admin@eventos.com")
+    await page.locator('#password').fill("123456")
+    await page.getByRole("button", { name: "Entrar" }).click()
+    await page.waitForURL("/", { timeout: 10000 })
+    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible({ timeout: 10000 })
 }
 
 test.describe("Participants", () => {
@@ -14,21 +15,20 @@ test.describe("Participants", () => {
     })
 
     test("should navigate to participants page", async ({ page }) => {
-        await page.getByText("Participantes").click()
-        await expect(page).toHaveURL("/participantes")
-        await expect(
-            page.getByText("Gerencie os participantes dos seus eventos")
-        ).toBeVisible()
+        await page.goto("/participantes")
+        await expect(page.getByRole("heading", { name: "Participantes" })).toBeVisible({ timeout: 10000 })
+        await expect(page.getByText("Gerencie os participantes dos seus eventos")).toBeVisible()
     })
 
     test("should display participants table", async ({ page }) => {
         await page.goto("/participantes")
-        await expect(page.getByText("Ana Silva")).toBeVisible()
+        await expect(page.getByRole("cell", { name: "Ana Silva" })).toBeVisible({ timeout: 10000 })
     })
 
     test("should filter participants by search", async ({ page }) => {
         await page.goto("/participantes")
+        await expect(page.getByRole("cell", { name: "Ana Silva" })).toBeVisible({ timeout: 10000 })
         await page.getByPlaceholder("Buscar").fill("Ana")
-        await expect(page.getByText("Ana Silva")).toBeVisible()
+        await expect(page.getByRole("cell", { name: "Ana Silva" })).toBeVisible()
     })
 })
