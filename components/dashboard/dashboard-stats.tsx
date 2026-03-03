@@ -1,12 +1,13 @@
 "use client"
 
-import { Calendar, Users, CheckCircle } from "lucide-react"
+import { Calendar, Users, CheckCircle, Clock } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 
 interface DashboardStatsProps {
   totalEvents: number
   totalParticipants: number
   checkinCount: number
+  pendingCheckins: number
 }
 
 const statConfig = [
@@ -31,21 +32,30 @@ const statConfig = [
     color: "text-success",
     bgColor: "bg-success/10",
   },
+  {
+    key: "pending",
+    label: "Pendentes de Check-in",
+    icon: Clock,
+    color: "text-warning",
+    bgColor: "bg-warning/10",
+  },
 ]
 
 export function DashboardStats({
   totalEvents,
   totalParticipants,
   checkinCount,
+  pendingCheckins,
 }: DashboardStatsProps) {
   const values: Record<string, string> = {
     events: String(totalEvents),
     participants: String(totalParticipants),
     checkins: String(checkinCount),
+    pending: String(pendingCheckins),
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {statConfig.map((stat) => {
         const Icon = stat.icon
         return (

@@ -37,6 +37,7 @@ export default function DashboardPage() {
                 totalEvents={data.totalEvents}
                 totalParticipants={data.totalParticipants}
                 checkinCount={data.checkinCount}
+                pendingCheckins={data.pendingCheckins}
             />
             <div className="grid gap-6 lg:grid-cols-2">
                 <UpcomingEvents events={data.upcomingEvents} />
