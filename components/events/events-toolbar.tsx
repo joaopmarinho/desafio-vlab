@@ -3,6 +3,7 @@
 import { Search, Plus } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -16,6 +17,10 @@ interface EventsToolbarProps {
   onSearchChange: (value: string) => void
   statusFilter: string
   onStatusFilterChange: (value: string) => void
+  dateFrom: string
+  onDateFromChange: (value: string) => void
+  dateTo: string
+  onDateToChange: (value: string) => void
   onNew: () => void
 }
 
@@ -24,35 +29,81 @@ export function EventsToolbar({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
+  dateFrom,
+  onDateFromChange,
+  dateTo,
+  onDateToChange,
   onNew,
 }: EventsToolbarProps) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-1 items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 items-center gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome ou local..."
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="Ativo">Ativo</SelectItem>
+              <SelectItem value="Encerrado">Encerrado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={onNew} className="shrink-0">
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Evento
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="date-from" className="text-xs text-muted-foreground">
+            De
+          </Label>
           <Input
-            placeholder="Buscar eventos..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9"
+            id="date-from"
+            type="date"
+            value={dateFrom}
+            onChange={(e) => onDateFromChange(e.target.value)}
+            className="w-[160px]"
           />
         </div>
-        <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="Ativo">Ativo</SelectItem>
-            <SelectItem value="Encerrado">Encerrado</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="date-to" className="text-xs text-muted-foreground">
+            Até
+          </Label>
+          <Input
+            id="date-to"
+            type="date"
+            value={dateTo}
+            onChange={(e) => onDateToChange(e.target.value)}
+            className="w-[160px]"
+          />
+        </div>
+        {(dateFrom || dateTo) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              onDateFromChange("")
+              onDateToChange("")
+            }}
+            className="text-xs text-muted-foreground"
+          >
+            Limpar datas
+          </Button>
+        )}
       </div>
-      <Button onClick={onNew} className="shrink-0">
-        <Plus className="mr-2 h-4 w-4" />
-        Novo Evento
-      </Button>
     </div>
   )
 }
