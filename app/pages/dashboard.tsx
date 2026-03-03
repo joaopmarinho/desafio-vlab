@@ -5,7 +5,7 @@ import { DashboardStats } from "@/components/dashboard/dashboard-stats"
 import { UpcomingEvents } from "@/components/dashboard/upcoming-events"
 import { RecentCheckins } from "@/components/dashboard/recent-checkins"
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton"
-import { CheckinChart } from "@/components/dashboard/checkin-chart"
+
 import { ErrorCard } from "@/components/shared/error-card"
 
 export default function DashboardPage() {
@@ -42,10 +42,6 @@ export default function DashboardPage() {
                 <UpcomingEvents events={data.upcomingEvents} />
                 <RecentCheckins checkins={data.recentCheckins} />
             </div>
-            <CheckinChart
-                checkinCount={data.checkinCount}
-                totalParticipants={data.totalParticipants}
-            />
         </div>
     )
 }
