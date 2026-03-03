@@ -149,7 +149,11 @@ export function useCheckinRules({ eventId, initialRules }: UseCheckinRulesOption
         setHasChanges(true)
     }, [])
 
-    const canSave = hasChanges && rules.every((r) => r.name.trim())
+    const canSave =
+        hasChanges &&
+        rules.every((r) => r.name.trim()) &&
+        validation.conflicts.length === 0 &&
+        validation.warnings.length === 0
 
     const markSaved = useCallback(() => {
         setHasChanges(false)
